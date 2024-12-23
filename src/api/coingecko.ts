@@ -2,7 +2,7 @@ import axios from 'axios';
 import { Coin } from '../types/coin';
 
 const COINGECKO_API = 'https://api.coingecko.com/api/v3';
-const COIN_IDS = [
+export const COIN_IDS = [
 'ai16z',
 'fartcoin',
 'grass',
@@ -124,4 +124,62 @@ export const getCoins = async (): Promise<Coin[]> => {
     price_change_percentage_24h: coin.price_change_percentage_24h || 0,
     total_volume: coin.total_volume || 0,
   }));
+};
+
+export const fetchMultipleCoinsHistory = async (
+  coinIds: string[],
+  days: number = 7
+): Promise<Record<string, number[]>> => {
+  const promises = coinIds.map(id =>
+    axios.get(`${COINGECKO_API}/coins/${id}/market_chart`, {
+      params: {
+        vs_currency: 'usd',
+        days: days,
+        interval: 'daily'
+      }
+    })
+  );
+
+  try {
+    const responses = await Promise.all(promises);
+    const priceData: Record<string, number[]> = {};
+    
+    responses.forEach((response, index) => {
+      const prices = response.data.prices.map((price: number[]) => price[1]);
+      priceData[coinIds[index]] = prices;
+    });
+
+    return priceData;
+  } catch (error) {
+    console.error('Error fetching multiple coins history:', error);
+    throw error;
+  }
+};
+
+export const calculatePriceChanges = (
+  priceData: Record<string, number[]>
+): Array<{ id: string; data: Array<{ x: string; y: number }> }> => {
+  const result = [];
+  const dates = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (6 - i));
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  });
+
+  for (const [coinId, prices] of Object.entries(priceData)) {
+    const dailyChanges = prices.slice(1).map((price, index) => {
+      const previousPrice = prices[index];
+      return (price - previousPrice) / previousPrice;
+    });
+
+    result.push({
+      id: coinId,
+      data: dailyChanges.map((change, index) => ({
+        x: dates[index + 1],
+        y: change
+      }))
+    });
+  }
+
+  return result;
 };
