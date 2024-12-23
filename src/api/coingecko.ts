@@ -111,7 +111,7 @@ const api = axios.create({
 
 export const getCoins = async (): Promise<Coin[]> => {
   const { data } = await api.get<Coin[]>(
-    `/coins/markets?vs_currency=usd&ids=${COIN_IDS}&order=market_cap_desc&sparkline=false`
+    `/coins/markets?vs_currency=usd&ids=${COIN_IDS}&order=market_cap_desc&sparkline=true`
   );
   return data.map(coin => ({
     id: coin.id,
@@ -123,6 +123,7 @@ export const getCoins = async (): Promise<Coin[]> => {
     market_cap_rank: coin.market_cap_rank || 0,
     price_change_percentage_24h: coin.price_change_percentage_24h || 0,
     total_volume: coin.total_volume || 0,
+    sparkline_in_7d: coin.sparkline_in_7d,
   }));
 };
 

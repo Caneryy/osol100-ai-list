@@ -1,14 +1,24 @@
 import React, { useState } from 'react';
-import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow, 
+  TableSortLabel,
+  Paper 
+} from '@mui/material';
+import { Area, AreaChart, ResponsiveContainer } from 'recharts';
 import { Coin } from '../types/coin';
 import { formatNumber } from '../utils/formatNumber';
-
-type SortField = 'market_cap' | 'current_price' | 'price_change_percentage_24h' | 'total_volume';
-type SortDirection = 'asc' | 'desc';
 
 interface CoinTableProps {
   coins: Coin[];
 }
+
+type SortField = 'market_cap' | 'current_price' | 'price_change_percentage_24h' | 'total_volume';
+type SortDirection = 'asc' | 'desc';
 
 export const CoinTable: React.FC<CoinTableProps> = ({ coins }) => {
   const [sortField, setSortField] = useState<SortField>('market_cap');
@@ -30,89 +40,95 @@ export const CoinTable: React.FC<CoinTableProps> = ({ coins }) => {
     return (valueA - valueB) * multiplier;
   });
 
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ArrowUpDown className="w-4 h-4 opacity-50" />;
-    return sortDirection === 'asc' ? 
-      <ArrowUp className="w-4 h-4 text-cyberpunk-purple" /> : 
-      <ArrowDown className="w-4 h-4 text-cyberpunk-purple" />;
-  };
-
-  const formatPriceChange = (value: number | null | undefined): string => {
-    if (value == null) return 'N/A';
-    return `${value.toFixed(2)}%`;
+  const generateSparklineData = (coin: Coin) => {
+    if (!coin.sparkline_in_7d?.price) return [];
+    return coin.sparkline_in_7d.price.map((price) => ({
+      value: price
+    }));
   };
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm text-left">
-        <thead className="text-xs uppercase bg-cyberpunk-darker/50">
-          <tr>
-            <th className="px-6 py-4">#</th>
-            <th className="px-6 py-4">Name</th>
-            <th className="px-6 py-4 cursor-pointer hover:text-cyberpunk-purple transition-colors" 
-                onClick={() => handleSort('current_price')}>
-              <div className="flex items-center gap-1">
+    <TableContainer component={Paper}>
+      <Table sx={{ minWidth: 650 }} aria-label="coin table">
+        <TableHead>
+          <TableRow>
+            <TableCell>Rank</TableCell>
+            <TableCell>Name</TableCell>
+            <TableCell align="right">
+              <TableSortLabel
+                active={sortField === 'current_price'}
+                direction={sortField === 'current_price' ? sortDirection : 'asc'}
+                onClick={() => handleSort('current_price')}
+              >
                 Price
-                <SortIcon field="current_price" />
-              </div>
-            </th>
-            <th className="px-6 py-4 cursor-pointer hover:text-cyberpunk-purple transition-colors" 
-                onClick={() => handleSort('price_change_percentage_24h')}>
-              <div className="flex items-center gap-1">
+              </TableSortLabel>
+            </TableCell>
+            <TableCell align="right">
+              <TableSortLabel
+                active={sortField === 'price_change_percentage_24h'}
+                direction={sortField === 'price_change_percentage_24h' ? sortDirection : 'asc'}
+                onClick={() => handleSort('price_change_percentage_24h')}
+              >
                 24h %
-                <SortIcon field="price_change_percentage_24h" />
-              </div>
-            </th>
-            <th className="px-6 py-4 cursor-pointer hover:text-cyberpunk-purple transition-colors" 
-                onClick={() => handleSort('market_cap')}>
-              <div className="flex items-center gap-1">
+              </TableSortLabel>
+            </TableCell>
+            <TableCell align="right">
+              <TableSortLabel
+                active={sortField === 'market_cap'}
+                direction={sortField === 'market_cap' ? sortDirection : 'asc'}
+                onClick={() => handleSort('market_cap')}
+              >
                 Market Cap
-                <SortIcon field="market_cap" />
-              </div>
-            </th>
-            <th className="px-6 py-4 cursor-pointer hover:text-cyberpunk-purple transition-colors" 
-                onClick={() => handleSort('total_volume')}>
-              <div className="flex items-center gap-1">
+              </TableSortLabel>
+            </TableCell>
+            <TableCell align="right">
+              <TableSortLabel
+                active={sortField === 'total_volume'}
+                direction={sortField === 'total_volume' ? sortDirection : 'asc'}
+                onClick={() => handleSort('total_volume')}
+              >
                 Volume(24h)
-                <SortIcon field="total_volume" />
-              </div>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {sortedCoins.map((coin, index) => (
-            <tr key={coin.id} 
-                className="border-b border-purple-900/20 hover:bg-cyberpunk-darker/30 transition-colors">
-              <td className="px-6 py-4 font-medium text-purple-300">{index + 1}</td>
-              <td className="px-6 py-4">
-                <div className="flex items-center gap-2">
-                  <img src={coin.image} alt={coin.name} className="w-6 h-6" />
-                  <div>
-                    <div className="font-medium text-purple-100">{coin.name}</div>
-                    <div className="text-xs text-purple-400 uppercase">{coin.symbol}</div>
-                  </div>
+              </TableSortLabel>
+            </TableCell>
+            <TableCell align="right">Last 7 Days</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {sortedCoins.map((coin) => (
+            <TableRow key={coin.id}>
+              <TableCell>{coin.market_cap_rank}</TableCell>
+              <TableCell>
+                <div className="flex items-center">
+                  <img src={coin.image} alt={coin.name} className="w-6 h-6 mr-2" />
+                  <span className="font-medium">{coin.name}</span>
+                  <span className="ml-2 text-gray-500 uppercase">{coin.symbol}</span>
                 </div>
-              </td>
-              <td className="px-6 py-4 text-purple-100">
-                ${formatNumber(coin.current_price ?? 0)}
-              </td>
-              <td className={`px-6 py-4 ${
-                (coin.price_change_percentage_24h ?? 0) >= 0 
-                  ? 'text-green-400' 
-                  : 'text-red-400'
-              }`}>
-                {formatPriceChange(coin.price_change_percentage_24h)}
-              </td>
-              <td className="px-6 py-4 text-purple-100">
-                ${formatNumber(coin.market_cap ?? 0)}
-              </td>
-              <td className="px-6 py-4 text-purple-100">
-                ${formatNumber(coin.total_volume ?? 0)}
-              </td>
-            </tr>
+              </TableCell>
+              <TableCell align="right">${formatNumber(coin.current_price)}</TableCell>
+              <TableCell 
+                align="right"
+                className={coin.price_change_percentage_24h >= 0 ? 'text-green-500' : 'text-red-500'}
+              >
+                {coin.price_change_percentage_24h?.toFixed(2)}%
+              </TableCell>
+              <TableCell align="right">${formatNumber(coin.market_cap)}</TableCell>
+              <TableCell align="right">${formatNumber(coin.total_volume)}</TableCell>
+              <TableCell align="right" style={{ width: 120 }}>
+                <ResponsiveContainer width="100%" height={40}>
+                  <AreaChart data={generateSparklineData(coin)}>
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke={coin.price_change_percentage_24h >= 0 ? '#10B981' : '#EF4444'}
+                      fill={coin.price_change_percentage_24h >= 0 ? '#10B98120' : '#EF444420'}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 };
