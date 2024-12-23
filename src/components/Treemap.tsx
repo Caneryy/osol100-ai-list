@@ -65,6 +65,8 @@ const Treemap: React.FC<TreemapProps> = ({ coins }) => {
     marketCap 
   }) => {
     const uniqueId = `clip-${name}-${x}-${y}`;
+    const borderRadius = 8;
+    const gap = 2;
 
     if (width < 30 || height < 30) return null;
 
@@ -72,28 +74,37 @@ const Treemap: React.FC<TreemapProps> = ({ coins }) => {
       <g>
         <defs>
           <clipPath id={uniqueId}>
-            <rect x={x} y={y} width={width} height={height} />
+            <rect 
+              x={x + gap/2} 
+              y={y + gap/2} 
+              width={width - gap} 
+              height={height - gap} 
+              rx={borderRadius}
+              ry={borderRadius}
+            />
           </clipPath>
+          <filter id={`shadow-${uniqueId}`}>
+            <feGaussianBlur in="SourceAlpha" stdDeviation="2" />
+            <feOffset dx="0" dy="0" result="offsetblur" />
+            <feFlood floodColor="#000000" floodOpacity="0.3" />
+            <feComposite in2="offsetblur" operator="in" />
+            <feMerge>
+              <feMergeNode />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
         <image
-          x={x}
-          y={y}
-          width={width}
-          height={height}
+          x={x + gap/2}
+          y={y + gap/2}
+          width={width - gap}
+          height={height - gap}
           href={image}
           clipPath={`url(#${uniqueId})`}
           preserveAspectRatio="xMidYMid slice"
-          style={{ opacity: 0.8 }}
-        />
-        <rect
-          x={x}
-          y={y}
-          width={width}
-          height={height}
-          style={{
-            fill: 'transparent',
-            stroke: '#fff',
-            strokeWidth: 1,
+          style={{ 
+            opacity: 0.8,
+            filter: `url(#shadow-${uniqueId})`
           }}
         />
         {width > 50 && height > 30 && (
@@ -156,7 +167,7 @@ const Treemap: React.FC<TreemapProps> = ({ coins }) => {
         data={data}
         dataKey="size"
         ratio={4/3}
-        stroke="#fff"
+        stroke="none"
         content={<CustomContent />}
       >
         <Tooltip content={<CustomTooltip />} />
