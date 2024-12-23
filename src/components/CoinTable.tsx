@@ -9,9 +9,21 @@ import {
   TableSortLabel,
   Paper 
 } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import { Area, AreaChart, ResponsiveContainer } from 'recharts';
 import { Coin } from '../types/coin';
 import { formatNumber } from '../utils/formatNumber';
+
+// Özel styled TableSortLabel komponenti
+const StyledTableSortLabel = styled(TableSortLabel)<{ ispositive?: string }>(({ theme, ispositive }) => ({
+  color: ispositive === 'true' ? '#10B981' : ispositive === 'false' ? '#EF4444' : 'inherit',
+  '&.MuiTableSortLabel-active': {
+    color: ispositive === 'true' ? '#10B981' : ispositive === 'false' ? '#EF4444' : 'inherit',
+  },
+  '& .MuiTableSortLabel-icon': {
+    color: ispositive === 'true' ? '#10B981 !important' : ispositive === 'false' ? '#EF4444 !important' : 'inherit',
+  }
+}));
 
 interface CoinTableProps {
   coins: Coin[];
@@ -68,6 +80,7 @@ export const CoinTable: React.FC<CoinTableProps> = ({ coins }) => {
                 active={sortField === 'price_change_percentage_24h'}
                 direction={sortField === 'price_change_percentage_24h' ? sortDirection : 'asc'}
                 onClick={() => handleSort('price_change_percentage_24h')}
+                ispositive={sortedCoins[0]?.price_change_percentage_24h >= 0 ? 'true' : 'false'}
               >
                 24h %
               </TableSortLabel>
@@ -95,7 +108,14 @@ export const CoinTable: React.FC<CoinTableProps> = ({ coins }) => {
         </TableHead>
         <TableBody>
           {sortedCoins.map((coin) => (
-            <TableRow key={coin.id}>
+            <TableRow 
+              key={coin.id}
+              sx={{ 
+                '&:hover': { 
+                  backgroundColor: 'rgba(0, 0, 0, 0.04)' 
+                }
+              }}
+            >
               <TableCell>{coin.market_cap_rank}</TableCell>
               <TableCell>
                 <div className="flex items-center">
@@ -107,7 +127,10 @@ export const CoinTable: React.FC<CoinTableProps> = ({ coins }) => {
               <TableCell align="right">${formatNumber(coin.current_price)}</TableCell>
               <TableCell 
                 align="right"
-                className={coin.price_change_percentage_24h >= 0 ? 'text-green-500' : 'text-red-500'}
+                sx={{ 
+                  color: coin.price_change_percentage_24h >= 0 ? '#10B981' : '#EF4444',
+                  fontWeight: 'bold'
+                }}
               >
                 {coin.price_change_percentage_24h?.toFixed(2)}%
               </TableCell>
