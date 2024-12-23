@@ -70,15 +70,7 @@ const IndexPage = () => {
       <Container maxWidth="xl">
         {/* Header */}
         <Box sx={{ my: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom align="center" 
-            sx={{ 
-              background: 'linear-gradient(45deg, #9c27b0 30%, #f50057 90%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              fontWeight: 'bold'
-            }}>
-            OSOL 100 AI TRACKER
-          </Typography>
+        
         </Box>
 
         <MainContent />
