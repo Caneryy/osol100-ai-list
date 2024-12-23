@@ -1,4 +1,6 @@
-export const formatNumber = (num: number): string => {
+export const formatNumber = (num: number | undefined | null): string => {
+  if (num === undefined || num === null) return '0';
+  
   if (num >= 1e9) {
     return (num / 1e9).toFixed(2) + 'B';
   }
@@ -8,8 +10,6 @@ export const formatNumber = (num: number): string => {
   if (num >= 1e3) {
     return (num / 1e3).toFixed(2) + 'K';
   }
-  return num.toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
+  
+  return num.toLocaleString('en-US', { maximumFractionDigits: 2 });
 };
